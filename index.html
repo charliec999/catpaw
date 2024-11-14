@@ -38,15 +38,15 @@
 <body>
   <div class="message">Move the yarn around!</div>
 
-  <!-- Enhanced yarn ball cursor -->
+  
   <svg id="yarn" width="50" height="50" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="40" fill="#FF6B6B"/>
-    <!-- More detailed yarn texture -->
+    
     <path d="M30 50 Q50 20 70 50" stroke="white" stroke-width="4" fill="none"/>
     <path d="M30 60 Q50 40 70 60" stroke="white" stroke-width="4" fill="none"/>
     <path d="M40 30 Q50 50 60 30" stroke="white" stroke-width="3" fill="none"/>
     <path d="M20 45 Q50 70 80 45" stroke="white" stroke-width="3" fill="none"/>
-    <!-- Loose thread -->
+    
     <path id="thread" d="M70 70 Q90 80 85 90" stroke="#FF6B6B" stroke-width="4" fill="none">
       <animate attributeName="d" 
                dur="0.5s" 
@@ -57,30 +57,30 @@
     </path>
   </svg>
 
-  <!-- Cat SVG -->
+  
   <svg id="cat" width="120" height="120" viewBox="0 0 200 200">
-    <!-- Body -->
+    
     <ellipse cx="100" cy="120" rx="60" ry="40" fill="#4A4A4A"/>
     
-    <!-- Head -->
+    
     <circle cx="100" cy="70" r="40" fill="#4A4A4A"/>
     
-    <!-- Ears -->
+    
     <path d="M70 40 L60 10 L85 35 Z" fill="#4A4A4A"/>
     <path d="M130 40 L140 10 L115 35 Z" fill="#4A4A4A"/>
     <path d="M70 40 L65 15 L80 32 Z" fill="#FFA7C4" opacity="0.8"/>
     <path d="M130 40 L135 15 L120 32 Z" fill="#FFA7C4" opacity="0.8"/>
     
-    <!-- Eyes -->
+    
     <ellipse cx="85" cy="65" rx="5" ry="10" fill="#FFD700"/>
     <ellipse cx="115" cy="65" rx="5" ry="10" fill="#FFD700"/>
     <ellipse cx="85" cy="65" rx="2" ry="5" fill="black"/>
     <ellipse cx="115" cy="65" rx="2" ry="5" fill="black"/>
     
-    <!-- Nose -->
+    
     <path d="M97 75 L103 75 L100 80 Z" fill="#FFA7C4"/>
     
-    <!-- Whiskers -->
+    
     <g stroke="#666" stroke-width="1.5">
       <line x1="85" y1="80" x2="45" y2="75"/>
       <line x1="85" y1="85" x2="45" y2="85"/>
@@ -90,7 +90,7 @@
       <line x1="115" y1="90" x2="155" y2="95"/>
     </g>
 
-    <!-- Paw (this will be animated) -->
+    
     <g id="paw">
       <circle cx="130" cy="140" r="15" fill="#333333"/>
       <circle cx="120" cy="130" r="5" fill="#4A4A4A"/>
