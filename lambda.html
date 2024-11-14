@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #f0f0f0;
+      cursor: none;
+      overflow: hidden;
+    }
+
+    #yarn {
+      position: absolute;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    #cat {
+      position: absolute;
+      pointer-events: none;
+      z-index: 900;
+    }
+
+    .message {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: Arial, sans-serif;
+      background: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="message">Move the yarn around!</div>
+
+  <!-- Enhanced yarn ball cursor -->
+  <svg id="yarn" width="50" height="50" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="40" fill="#FF6B6B"/>
+    <!-- More detailed yarn texture -->
+    <path d="M30 50 Q50 20 70 50" stroke="white" stroke-width="4" fill="none"/>
+    <path d="M30 60 Q50 40 70 60" stroke="white" stroke-width="4" fill="none"/>
+    <path d="M40 30 Q50 50 60 30" stroke="white" stroke-width="3" fill="none"/>
+    <path d="M20 45 Q50 70 80 45" stroke="white" stroke-width="3" fill="none"/>
+    <!-- Loose thread -->
+    <path id="thread" d="M70 70 Q90 80 85 90" stroke="#FF6B6B" stroke-width="4" fill="none">
+      <animate attributeName="d" 
+               dur="0.5s" 
+               repeatCount="indefinite" 
+               values="M70 70 Q90 80 85 90;
+                       M70 70 Q85 85 80 95;
+                       M70 70 Q90 80 85 90"/>
+    </path>
+  </svg>
+
+  <!-- Cat SVG -->
+  <svg id="cat" width="120" height="120" viewBox="0 0 200 200">
+    <!-- Body -->
+    <ellipse cx="100" cy="120" rx="60" ry="40" fill="#4A4A4A"/>
+    
+    <!-- Head -->
+    <circle cx="100" cy="70" r="40" fill="#4A4A4A"/>
+    
+    <!-- Ears -->
+    <path d="M70 40 L60 10 L85 35 Z" fill="#4A4A4A"/>
+    <path d="M130 40 L140 10 L115 35 Z" fill="#4A4A4A"/>
+    <path d="M70 40 L65 15 L80 32 Z" fill="#FFA7C4" opacity="0.8"/>
+    <path d="M130 40 L135 15 L120 32 Z" fill="#FFA7C4" opacity="0.8"/>
+    
+    <!-- Eyes -->
+    <ellipse cx="85" cy="65" rx="5" ry="10" fill="#FFD700"/>
+    <ellipse cx="115" cy="65" rx="5" ry="10" fill="#FFD700"/>
+    <ellipse cx="85" cy="65" rx="2" ry="5" fill="black"/>
+    <ellipse cx="115" cy="65" rx="2" ry="5" fill="black"/>
+    
+    <!-- Nose -->
+    <path d="M97 75 L103 75 L100 80 Z" fill="#FFA7C4"/>
+    
+    <!-- Whiskers -->
+    <g stroke="#666" stroke-width="1.5">
+      <line x1="85" y1="80" x2="45" y2="75"/>
+      <line x1="85" y1="85" x2="45" y2="85"/>
+      <line x1="85" y1="90" x2="45" y2="95"/>
+      <line x1="115" y1="80" x2="155" y2="75"/>
+      <line x1="115" y1="85" x2="155" y2="85"/>
+      <line x1="115" y1="90" x2="155" y2="95"/>
+    </g>
+
+    <!-- Paw (this will be animated) -->
+    <g id="paw">
+      <circle cx="130" cy="140" r="15" fill="#333333"/>
+      <circle cx="120" cy="130" r="5" fill="#4A4A4A"/>
+      <circle cx="140" cy="130" r="5" fill="#4A4A4A"/>
+      <circle cx="130" cy="125" r="5" fill="#4A4A4A"/>
+    </g>
+  </svg>
+
+  <script>
+    const yarn = document.getElementById('yarn');
+    const cat = document.getElementById('cat');
+    const paw = document.getElementById('paw');
+    let mouseX = 0;
+    let mouseY = 0;
+    let catX = window.innerWidth / 2;
+    let catY = window.innerHeight / 2;
+    let idealDistance = 100; // Distance cat tries to maintain from yarn
+    
+    // Track mouse position
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      
+      // Add slight wobble to yarn movement
+      const wobbleX = Math.sin(Date.now() / 200) * 5;
+      const wobbleY = Math.cos(Date.now() / 200) * 5;
+      yarn.style.transform = `translate(${mouseX - 25 + wobbleX}px, ${mouseY - 25 + wobbleY}px) rotate(${wobbleX}deg)`;
+    });
+
+    function animate() {
+      // Calculate distance to yarn
+      const dx = mouseX - catX;
+      const dy = mouseY - catY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Calculate target position that maintains ideal distance
+      const angle = Math.atan2(dy, dx);
+      const targetX = mouseX - Math.cos(angle) * idealDistance;
+      const targetY = mouseY - Math.sin(angle) * idealDistance;
+      
+      // Move cat towards target position with some randomness
+      const randomness = Math.sin(Date.now() / 500) * 10;
+      catX += (targetX - catX) * 0.05 + randomness * 0.1;
+      catY += (targetY - catY) * 0.05 + randomness * 0.1;
+      
+      // Position cat and flip based on direction
+      cat.style.transform = `translate(${catX - 60}px, ${catY - 60}px) ${dx > 0 ? '' : 'scale(-1,1)'}`;
+      
+      // Animate paw reaching for yarn
+      if (distance < 150) {
+        const pawAngle = Math.sin(Date.now() / 150) * 30;
+        const pawExtend = Math.abs(Math.sin(Date.now() / 150)) * 20;
+        paw.style.transform = `rotate(${pawAngle}deg) translate(${pawExtend}px, ${-pawExtend}px)`;
+      } else {
+        paw.style.transform = 'rotate(0deg)';
+      }
+
+      // Make eyes follow yarn
+      const eyes = cat.querySelectorAll('ellipse');
+      const eyeAngle = Math.atan2(mouseY - catY, mouseX - catX);
+      const eyeX = Math.cos(eyeAngle) * 3;
+      const eyeY = Math.sin(eyeAngle) * 3;
+      eyes[2].setAttribute('cx', 85 + eyeX);
+      eyes[2].setAttribute('cy', 65 + eyeY);
+      eyes[3].setAttribute('cx', 115 + eyeX);
+      eyes[3].setAttribute('cy', 65 + eyeY);
+      
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
