@@ -107,39 +107,39 @@
     let mouseY = 0;
     let catX = window.innerWidth / 2;
     let catY = window.innerHeight / 2;
-    let idealDistance = 100; // Distance cat tries to maintain from yarn
+    let idealDistance = 100; 
     
-    // Track mouse position
+    
     document.addEventListener('mousemove', (e) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
       
-      // Add slight wobble to yarn movement
+      
       const wobbleX = Math.sin(Date.now() / 200) * 5;
       const wobbleY = Math.cos(Date.now() / 200) * 5;
       yarn.style.transform = `translate(${mouseX - 25 + wobbleX}px, ${mouseY - 25 + wobbleY}px) rotate(${wobbleX}deg)`;
     });
 
     function animate() {
-      // Calculate distance to yarn
+      
       const dx = mouseX - catX;
       const dy = mouseY - catY;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      // Calculate target position that maintains ideal distance
+      
       const angle = Math.atan2(dy, dx);
       const targetX = mouseX - Math.cos(angle) * idealDistance;
       const targetY = mouseY - Math.sin(angle) * idealDistance;
       
-      // Move cat towards target position with some randomness
+      
       const randomness = Math.sin(Date.now() / 500) * 10;
       catX += (targetX - catX) * 0.05 + randomness * 0.1;
       catY += (targetY - catY) * 0.05 + randomness * 0.1;
       
-      // Position cat and flip based on direction
+      
       cat.style.transform = `translate(${catX - 60}px, ${catY - 60}px) ${dx > 0 ? '' : 'scale(-1,1)'}`;
       
-      // Animate paw reaching for yarn
+      
       if (distance < 150) {
         const pawAngle = Math.sin(Date.now() / 150) * 30;
         const pawExtend = Math.abs(Math.sin(Date.now() / 150)) * 20;
@@ -148,7 +148,7 @@
         paw.style.transform = 'rotate(0deg)';
       }
 
-      // Make eyes follow yarn
+      
       const eyes = cat.querySelectorAll('ellipse');
       const eyeAngle = Math.atan2(mouseY - catY, mouseX - catX);
       const eyeX = Math.cos(eyeAngle) * 3;
