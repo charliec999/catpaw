@@ -8,6 +8,7 @@
       background: #f0f0f0;
       cursor: none;
       overflow: hidden;
+      font-family: Arial, sans-serif;
     }
 
     #yarn {
@@ -27,17 +28,45 @@
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      font-family: Arial, sans-serif;
       background: white;
       padding: 10px 20px;
       border-radius: 20px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
+
+    .game-stats {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.8);
+      padding: 10px 20px;
+      border-radius: 20px;
+    }
+
+    .yarn-ball {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: #FF6B6B;
+      border-radius: 50%;
+      z-index: 800;
+    }
+
+    .obstacle {
+      position: absolute;
+      background-color: #666;
+      border-radius: 10px;
+      z-index: 700;
+    }
   </style>
 </head>
 <body>
   <div class="message">Move the yarn around!</div>
-
+  <div class="game-stats">
+    Yarn Balls: <span id="yarn-ball-count">0</span> | 
+    Cats: <span id="cat-count">1</span>
+  </div>
   
   <svg id="yarn" width="50" height="50" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="40" fill="#FF6B6B"/>
@@ -57,30 +86,18 @@
     </path>
   </svg>
 
-  
   <svg id="cat" width="120" height="120" viewBox="0 0 200 200">
-    
     <ellipse cx="100" cy="120" rx="60" ry="40" fill="#4A4A4A"/>
-    
-    
     <circle cx="100" cy="70" r="40" fill="#4A4A4A"/>
-    
-    
     <path d="M70 40 L60 10 L85 35 Z" fill="#4A4A4A"/>
     <path d="M130 40 L140 10 L115 35 Z" fill="#4A4A4A"/>
     <path d="M70 40 L65 15 L80 32 Z" fill="#FFA7C4" opacity="0.8"/>
     <path d="M130 40 L135 15 L120 32 Z" fill="#FFA7C4" opacity="0.8"/>
-    
-    
     <ellipse cx="85" cy="65" rx="5" ry="10" fill="#FFD700"/>
     <ellipse cx="115" cy="65" rx="5" ry="10" fill="#FFD700"/>
     <ellipse cx="85" cy="65" rx="2" ry="5" fill="black"/>
     <ellipse cx="115" cy="65" rx="2" ry="5" fill="black"/>
-    
-    
     <path d="M97 75 L103 75 L100 80 Z" fill="#FFA7C4"/>
-    
-    
     <g stroke="#666" stroke-width="1.5">
       <line x1="85" y1="80" x2="45" y2="75"/>
       <line x1="85" y1="85" x2="45" y2="85"/>
@@ -89,8 +106,6 @@
       <line x1="115" y1="85" x2="155" y2="85"/>
       <line x1="115" y1="90" x2="155" y2="95"/>
     </g>
-
-    
     <g id="paw">
       <circle cx="130" cy="140" r="15" fill="#333333"/>
       <circle cx="120" cy="130" r="5" fill="#4A4A4A"/>
@@ -103,42 +118,120 @@
     const yarn = document.getElementById('yarn');
     const cat = document.getElementById('cat');
     const paw = document.getElementById('paw');
+    const yarnBallCountEl = document.getElementById('yarn-ball-count');
+    const catCountEl = document.getElementById('cat-count');
+
     let mouseX = 0;
     let mouseY = 0;
     let catX = window.innerWidth / 2;
     let catY = window.innerHeight / 2;
-    let idealDistance = 100; 
+    let idealDistance = 100;
     
+    let yarnBalls = [];
+    let obstacles = [];
+    let yarnBallCount = 0;
+    let catCount = 1;
+
+    function createYarnBall() {
+      const yarnBall = document.createElement('div');
+      yarnBall.classList.add('yarn-ball');
+      yarnBall.style.left = `${Math.random() * (window.innerWidth - 20)}px`;
+      yarnBall.style.top = `${Math.random() * (window.innerHeight - 20)}px`;
+      document.body.appendChild(yarnBall);
+      yarnBalls.push(yarnBall);
+      return yarnBall;
+    }
+
+    function createObstacle() {
+      const obstacle = document.createElement('div');
+      obstacle.classList.add('obstacle');
+      obstacle.style.width = `${Math.random() * 50 + 20}px`;
+      obstacle.style.height = `${Math.random() * 50 + 20}px`;
+      obstacle.style.left = `${Math.random() * (window.innerWidth - 50)}px`;
+      obstacle.style.top = `${Math.random() * (window.innerHeight - 50)}px`;
+      document.body.appendChild(obstacle);
+      obstacles.push(obstacle);
+      return obstacle;
+    }
+
     
+    for (let i = 0; i < 5; i++) {
+      createYarnBall();
+    }
+    for (let i = 0; i < 3; i++) {
+      createObstacle();
+    }
+
     document.addEventListener('mousemove', (e) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
-      
       
       const wobbleX = Math.sin(Date.now() / 200) * 5;
       const wobbleY = Math.cos(Date.now() / 200) * 5;
       yarn.style.transform = `translate(${mouseX - 25 + wobbleX}px, ${mouseY - 25 + wobbleY}px) rotate(${wobbleX}deg)`;
     });
 
+    function checkCollisions() {
+      yarnBalls.forEach((ball, index) => {
+        const ballRect = ball.getBoundingClientRect();
+        const catRect = cat.getBoundingClientRect();
+
+        if (
+          ballRect.left < catRect.right &&
+          ballRect.right > catRect.left &&
+          ballRect.top < catRect.bottom &&
+          ballRect.bottom > catRect.top
+        ) {
+          
+          document.body.removeChild(ball);
+          yarnBalls.splice(index, 1);
+          yarnBallCount++;
+          yarnBallCountEl.textContent = yarnBallCount;
+
+          
+          createYarnBall();
+
+          
+          if (yarnBallCount % 5 === 0) {
+            catCount++;
+            catCountEl.textContent = catCount;
+          }
+        }
+      });
+    }
+
+    function isNearObstacle(x, y) {
+      return obstacles.some(obstacle => {
+        const obstacleRect = obstacle.getBoundingClientRect();
+        return (
+          x < obstacleRect.right &&
+          x > obstacleRect.left &&
+          y < obstacleRect.bottom &&
+          y > obstacleRect.top
+        );
+      });
+    }
+
     function animate() {
-      
       const dx = mouseX - catX;
       const dy = mouseY - catY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
       
       const angle = Math.atan2(dy, dx);
       const targetX = mouseX - Math.cos(angle) * idealDistance;
       const targetY = mouseY - Math.sin(angle) * idealDistance;
       
-      
       const randomness = Math.sin(Date.now() / 500) * 10;
-      catX += (targetX - catX) * 0.05 + randomness * 0.1;
-      catY += (targetY - catY) * 0.05 + randomness * 0.1;
+      const newCatX = targetX - catX * 0.05 + randomness * 0.1;
+      const newCatY = targetY - catY * 0.05 + randomness * 0.1;
+
       
+      if (!isNearObstacle(catX + newCatX, catY + newCatY)) {
+        catX += newCatX;
+        catY += newCatY;
+      }
       
       cat.style.transform = `translate(${catX - 60}px, ${catY - 60}px) ${dx > 0 ? '' : 'scale(-1,1)'}`;
-      
       
       if (distance < 150) {
         const pawAngle = Math.sin(Date.now() / 150) * 30;
@@ -148,7 +241,6 @@
         paw.style.transform = 'rotate(0deg)';
       }
 
-      
       const eyes = cat.querySelectorAll('ellipse');
       const eyeAngle = Math.atan2(mouseY - catY, mouseX - catX);
       const eyeX = Math.cos(eyeAngle) * 3;
@@ -157,6 +249,8 @@
       eyes[2].setAttribute('cy', 65 + eyeY);
       eyes[3].setAttribute('cx', 115 + eyeX);
       eyes[3].setAttribute('cy', 65 + eyeY);
+      
+      checkCollisions();
       
       requestAnimationFrame(animate);
     }
