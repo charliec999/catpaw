@@ -3,84 +3,15 @@
 <head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
-    body {
-      margin: 0;
-      height: 100vh;
-      background: #f0f0f0;
-      cursor: none;
-      overflow: hidden;
-      font-family: 'Roboto', sans-serif;
-      user-select: none;
-    }
-    #yarn, #cat, .cat-follower {
-      position: absolute;
-      pointer-events: none;
-      z-index: 900;
-    }
-    .game-stats {
-      position: fixed;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,0.8);
-      padding: 5px 15px;
-      border-radius: 20px;
-      font-weight: bold;
-    }
-    .warning {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255,100,100,0.8);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 10px;
-      text-align: center;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .yarn-ball {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background-color: #FF6B6B;
-      border-radius: 50%;
-      z-index: 800;
-    }
-    .obstacle {
-      position: absolute;
-      background-color: #666;
-      border-radius: 10px;
-      z-index: 700;
-      opacity: 0.7;
-    }
-    #game-over {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      display: none;
-      width: 300px;
-    }
-    #restart-btn {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-top: 20px;
-      transition: background-color 0.3s;
-    }
-    #restart-btn:hover {
-      background-color: #45a049;
-    }
+    body{margin:0;height:100vh;background:#f0f0f0;cursor:none;overflow:hidden;font-family:'Roboto',sans-serif;user-select:none}
+    #yarn,#cat,.cat-follower{position:absolute;pointer-events:none;z-index:900}
+    .game-stats{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.8);padding:5px 15px;border-radius:20px;font-weight:bold}
+    .warning{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(255,100,100,0.8);color:white;padding:10px 20px;border-radius:10px;text-align:center;opacity:0;transition:opacity 0.3s}
+    .yarn-ball{position:absolute;width:20px;height:20px;background-color:#FF6B6B;border-radius:50%;z-index:800}
+    .obstacle{position:absolute;background-color:#666;border-radius:10px;z-index:700;opacity:0.7;transition:transform 0.5s ease}
+    #game-over{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:15px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.1);display:none;width:300px}
+    #restart-btn{background-color:#4CAF50;color:white;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;margin-top:20px;transition:background-color 0.3s}
+    #restart-btn:hover{background-color:#45a049}
   </style>
 </head>
 <body>
@@ -88,6 +19,7 @@
   <div id="warning" class="warning"></div>
   <div id="game-over">
     <h2>Game Over</h2>
+    <p>Reason: <span id="game-over-reason">Unknown</span></p>
     <p>Score: <span id="final-score">0</span></p>
     <p>High Score: <span id="high-score">0</span></p>
     <button id="restart-btn">Restart</button>
@@ -116,204 +48,217 @@
   </svg>
 
   <script>
-    const yarn = document.getElementById('yarn');
-    const cat = document.getElementById('cat');
-    const yarnBallCountEl = document.getElementById('yarn-ball-count');
-    const catCountEl = document.getElementById('cat-count');
-    const gameStatsEl = document.getElementById('game-stats');
-    const gameOverEl = document.getElementById('game-over');
-    const restartBtn = document.getElementById('restart-btn');
-    const warningEl = document.getElementById('warning');
-    const finalScoreEl = document.getElementById('final-score');
-    const highScoreEl = document.getElementById('high-score');
+    const yarn=document.getElementById('yarn'),cat=document.getElementById('cat'),
+    yarnBallCountEl=document.getElementById('yarn-ball-count'),
+    catCountEl=document.getElementById('cat-count'),
+    gameOverEl=document.getElementById('game-over'),
+    gameOverReasonEl=document.getElementById('game-over-reason'),
+    restartBtn=document.getElementById('restart-btn'),
+    warningEl=document.getElementById('warning'),
+    finalScoreEl=document.getElementById('final-score'),
+    highScoreEl=document.getElementById('high-score');
 
-    let mouseX = 0, mouseY = 0;
-    let catX = window.innerWidth / 2, catY = window.innerHeight / 2;
-    let yarnBallCount = 0, catCount = 1;
-    let gameSpeed = 0.5;
-    let lastMouseMoveTime = Date.now();
-    let yarnBalls = [], obstacles = [], cats = [];
-    let isGameOver = false;
-    let highScore = localStorage.getItem('highScore') || 0;
+    let mouseX=0,mouseY=0,catX=window.innerWidth/2,catY=window.innerHeight/2,
+    yarnBallCount=0,catCount=1,gameSpeed=0.3,
+    lastMouseMoveTime=Date.now(),yarnBalls=[],obstacles=[],cats=[],
+    isGameOver=false,highScore=localStorage.getItem('highScore')||0,
+    obstacleMovementActive=false;
 
-    function showWarning(message) {
-      warningEl.textContent = message;
-      warningEl.style.opacity = '1';
-      setTimeout(() => {
-        warningEl.style.opacity = '0';
-      }, 2000);
+    function showWarning(message){
+      warningEl.textContent=message;
+      warningEl.style.opacity='1';
+      setTimeout(()=>{warningEl.style.opacity='0';},2000);
     }
 
-    function createYarnBall() {
-      const yarnBall = document.createElement('div');
+    function createYarnBall(){
+      const yarnBall=document.createElement('div');
       yarnBall.classList.add('yarn-ball');
-      yarnBall.style.left = `${Math.random() * (window.innerWidth - 20)}px`;
-      yarnBall.style.top = `${Math.random() * (window.innerHeight - 20)}px`;
+      yarnBall.style.left=`${Math.random()*(window.innerWidth-20)}px`;
+      yarnBall.style.top=`${Math.random()*(window.innerHeight-20)}px`;
       document.body.appendChild(yarnBall);
       yarnBalls.push(yarnBall);
       return yarnBall;
     }
 
-    function createObstacle() {
-      const obstacle = document.createElement('div');
+    function createMovingObstacle(){
+      const obstacle=document.createElement('div');
       obstacle.classList.add('obstacle');
-      obstacle.style.width = `${Math.random() * 50 + 20}px`;
-      obstacle.style.height = `${Math.random() * 50 + 20}px`;
-      obstacle.style.left = `${Math.random() * (window.innerWidth - 50)}px`;
-      obstacle.style.top = `${Math.random() * (window.innerHeight - 50)}px`;
+      obstacle.style.width=`${Math.random()*50+20}px`;
+      obstacle.style.height=`${Math.random()*50+20}px`;
+      obstacle.style.left=`${Math.random()*(window.innerWidth-50)}px`;
+      obstacle.style.top=`${Math.random()*(window.innerHeight-50)}px`;
       document.body.appendChild(obstacle);
-      obstacles.push(obstacle);
+      obstacles.push({
+        el:obstacle,
+        dx:(Math.random()-0.5)*4,
+        dy:(Math.random()-0.5)*4
+      });
       return obstacle;
     }
 
-    function createCatFollower(x, y) {
-      const catFollower = cat.cloneNode(true);
-      catFollower.id = '';
+    function moveObstacles(){
+      if(!obstacleMovementActive)return;
+      obstacles.forEach(obstacle=>{
+        let left=parseFloat(obstacle.el.style.left);
+        let top=parseFloat(obstacle.el.style.top);
+        if(left<=0||left>=window.innerWidth-obstacle.el.offsetWidth)obstacle.dx*=-1;
+        if(top<=0||top>=window.innerHeight-obstacle.el.offsetHeight)obstacle.dy*=-1;
+        left+=obstacle.dx;
+        top+=obstacle.dy;
+        obstacle.el.style.left=`${left}px`;
+        obstacle.el.style.top=`${top}px`;
+      });
+    }
+
+    function createCatFollower(x,y){
+      const catFollower=cat.cloneNode(true);
+      catFollower.id='';
       catFollower.classList.add('cat-follower');
-      catFollower.style.transform = `translate(${x - 60}px, ${y - 60}px)`;
+      catFollower.style.transform=`translate(${x-60}px,${y-60}px)`;
       document.body.appendChild(catFollower);
-      cats.push({el: catFollower, x, y});
+      cats.push({el:catFollower,x,y});
       return catFollower;
     }
 
-    function resetGame() {
-      isGameOver = false;
-      yarnBallCount = 0;
-      catCount = 1;
-      yarnBallCountEl.textContent = '0';
-      catCountEl.textContent = '1';
-      gameOverEl.style.display = 'none';
+    function resetGame(){
+      isGameOver=false;
+      yarnBallCount=0;
+      catCount=1;
+      yarnBallCountEl.textContent='0';
+      catCountEl.textContent='1';
+      gameOverEl.style.display='none';
+      gameSpeed=0.3;
+      obstacleMovementActive=false;
       
-      yarnBalls.forEach(ball => document.body.removeChild(ball));
-      obstacles.forEach(obs => document.body.removeChild(obs));
-      cats.slice(1).forEach(cat => document.body.removeChild(cat.el));
+      yarnBalls.forEach(ball=>document.body.removeChild(ball));
+      obstacles.forEach(obs=>document.body.removeChild(obs.el));
+      cats.slice(1).forEach(cat=>document.body.removeChild(cat.el));
       
-      yarnBalls = [];
-      obstacles = [];
-      cats = [{el: cat, x: catX, y: catY}];
+      yarnBalls=[];
+      obstacles=[];
+      cats=[{el:cat,x:catX,y:catY}];
       
-      for (let i = 0; i < 5; i++) createYarnBall();
-      for (let i = 0; i < 3; i++) createObstacle();
+      for(let i=0;i<5;i++)createYarnBall();
       
-      catX = window.innerWidth / 2;
-      catY = window.innerHeight / 2;
-      gameSpeed = 0.5;
-      lastMouseMoveTime = Date.now();
+      catX=window.innerWidth/2;
+      catY=window.innerHeight/2;
+      cat.style.display='block';
+      cat.style.transform=`translate(${catX-60}px,${catY-60}px)`;
+      
+      lastMouseMoveTime=Date.now();
+      animate();
     }
 
-    document.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      lastMouseMoveTime = Date.now();
-      
-      yarn.style.transform = `translate(${mouseX - 25}px, ${mouseY - 25}px)`;
+    document.addEventListener('mousemove',(e)=>{
+      mouseX=e.clientX;
+      mouseY=e.clientY;
+      lastMouseMoveTime=Date.now();
+      yarn.style.transform=`translate(${mouseX-25}px,${mouseY-25}px)`;
     });
 
-    function checkCollisions() {
-      const mainCat = cats[0];
+    function checkCollisions(){
+      const mainCat=cats[0];
       
-      if (Date.now() - lastMouseMoveTime > 2000) {
+      if(Date.now()-lastMouseMoveTime>2000){
         showWarning("Keep moving the yarn or the cat will catch you!");
-        if (Date.now() - lastMouseMoveTime > 3000) {
-          showWarning("Game Over: You stopped moving!");
-          gameOver('Stopped moving');
+        if(Date.now()-lastMouseMoveTime>3000){
+          gameOver('Yarn stopped moving');
           return;
         }
       }
 
-      yarnBalls.forEach((ball, index) => {
-        const ballRect = ball.getBoundingClientRect();
-        const catRect = mainCat.el.getBoundingClientRect();
-
-        if (ballRect.left < catRect.right && ballRect.right > catRect.left &&
-            ballRect.top < catRect.bottom && ballRect.bottom > catRect.top) {
-          showWarning("Game Over: Cat caught the yarn ball!");
-          gameOver('Yarn ball caught');
-          return;
-        }
-      });
-
-      obstacles.forEach(obstacle => {
-        const obstacleRect = obstacle.getBoundingClientRect();
-        const catRect = mainCat.el.getBoundingClientRect();
-
-        if (obstacleRect.left < catRect.right && obstacleRect.right > catRect.left &&
-            obstacleRect.top < catRect.bottom && obstacleRect.bottom > catRect.top) {
-          showWarning("Game Over: Cat hit an obstacle!");
-          gameOver('Obstacle collision');
-          return;
-        }
-      });
-    }
-
-    function gameOver(reason) {
-      if (isGameOver) return;
-      isGameOver = true;
-      
-      if (yarnBallCount > highScore) {
-        highScore = yarnBallCount;
-        localStorage.setItem('highScore', highScore);
-      }
-      
-      finalScoreEl.textContent = yarnBallCount;
-      highScoreEl.textContent = highScore;
-      gameOverEl.style.display = 'block';
-    }
-
-    function animate() {
-      if (isGameOver) return;
-
-      const mainCat = cats[0];
-      const dx = mouseX - mainCat.x;
-      const dy = mouseY - mainCat.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      const speed = Math.min(distance * gameSpeed, 5);
-      mainCat.x += dx * speed / distance;
-      mainCat.y += dy * speed / distance;
-      
-      mainCat.el.style.transform = `translate(${mainCat.x - 60}px, ${mainCat.y - 60}px) ${dx > 0 ? '' : 'scale(-1,1)'}`;
-      
-      cats.slice(1).forEach((followerCat, index) => {
-        const prevCat = index === 0 ? mainCat : cats[index];
-        const dx = prevCat.x - followerCat.x;
-        const dy = prevCat.y - followerCat.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+      cats.slice(1).forEach((otherCat, index) => {
+        const otherCatRect = otherCat.el.getBoundingClientRect();
+        const mainCatRect = mainCat.el.getBoundingClientRect();
         
-        if (distance > 100) {
-          const speed = Math.min(distance * 0.05, 5);
-          followerCat.x += dx * speed / distance;
-          followerCat.y += dy * speed / distance;
-          
-          followerCat.el.style.transform = `translate(${followerCat.x - 60}px, ${followerCat.y - 60}px)`;
+        if(otherCatRect.left<mainCatRect.right&&otherCatRect.right>mainCatRect.left&&
+           otherCatRect.top<mainCatRect.bottom&&otherCatRect.bottom>mainCatRect.top){
+          gameOver('Cat collision');
+          return;
         }
       });
 
-      if (Math.random() < 0.01) {
-        const existingYarnBalls = yarnBalls.length;
-        if (existingYarnBalls < 5) {
-          createYarnBall();
+      yarnBalls.forEach((ball,index)=>{
+        const ballRect=ball.getBoundingClientRect();
+        const catRect=mainCat.el.getBoundingClientRect();
+
+        if(ballRect.left<catRect.right&&ballRect.right>catRect.left&&
+           ballRect.top<catRect.bottom&&ballRect.bottom>catRect.top){
+          gameOver('Yarn caught');
+          return;
         }
+      });
+
+      cats.forEach((cat, catIndex) => {
+        if(obstacleMovementActive){
+          obstacles.forEach((obstacle, index)=>{
+            const obstacleRect=obstacle.el.getBoundingClientRect();
+            const catRect=cat.el.getBoundingClientRect();
+
+            if(obstacleRect.left<catRect.right&&obstacleRect.right>catRect.left&&
+               obstacleRect.top<catRect.bottom&&obstacleRect.bottom>catRect.top){
+              gameOver('Obstacle collision');
+              return;
+            }
+          });
+        }
+      });
+
+      if(Math.random()<0.01&&yarnBalls.length<5)createYarnBall();
+    }
+
+    function gameOver(reason){
+      if(isGameOver)return;
+      isGameOver=true;
+      
+      if(yarnBallCount>highScore){
+        highScore=yarnBallCount;
+        localStorage.setItem('highScore',highScore);
       }
+      
+      finalScoreEl.textContent=yarnBallCount;
+      highScoreEl.textContent=highScore;
+      gameOverReasonEl.textContent=reason;
+      gameOverEl.style.display='block';
+      cat.style.display='none';
+    }
+
+    function animate(){
+      if(isGameOver)return;
+      moveObstacles();
+
+      const mainCat=cats[0];
+      const dx=mouseX-mainCat.x;
+      const dy=mouseY-mainCat.y;
+      const distance=Math.sqrt(dx*dx+dy*dy);
+      
+      const speed=Math.min(distance*gameSpeed,3);
+      mainCat.x+=dx*speed/distance;
+      mainCat.y+=dy*speed/distance;
+      
+      mainCat.el.style.transform=`translate(${mainCat.x-60}px,${mainCat.y-60}px) ${dx>0?'':'scale(-1,1)'}`;
+      
+      cats.slice(1).forEach((followerCat,index)=>{
+        const prevCat=index===0?mainCat:cats[index];
+        const dx=prevCat.x-followerCat.x;
+        const dy=prevCat.y-followerCat.y;
+        const distance=Math.sqrt(dx*dx+dy*dy);
+        
+        if(distance>100){
+          const speed=Math.min(distance*0.05,5);
+          followerCat.x+=dx*speed/distance;
+          followerCat.y+=dy*speed/distance;
+          
+          followerCat.el.style.transform=`translate(${followerCat.x-60}px,${followerCat.y-60}px)`;
+        }
+      });
 
       checkCollisions();
-
-      if (yarnBallCount > 0 && yarnBallCount % 5 === 0) {
-        const newCat = createCatFollower(mainCat.x - 100, mainCat.y);
-        yarnBallCount++;
-        catCount++;
-        yarnBallCountEl.textContent = yarnBallCount;
-        catCountEl.textContent = catCount;
-        gameSpeed *= 1.1;
-      }
-
       requestAnimationFrame(animate);
     }
 
-    restartBtn.addEventListener('click', resetGame);
-
+    restartBtn.addEventListener('click',resetGame);
     resetGame();
-    animate();
   </script>
 </body>
 </html>
