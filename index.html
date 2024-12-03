@@ -19,7 +19,6 @@
   <div id="warning" class="warning"></div>
   <div id="game-over">
     <h2>Game Over</h2>
-    <p>Reason: <span id="game-over-reason">Unknown</span></p>
     <p>Score: <span id="final-score">0</span></p>
     <p>High Score: <span id="high-score">0</span></p>
     <button id="restart-btn">Restart</button>
@@ -52,7 +51,6 @@
     yarnBallCountEl=document.getElementById('yarn-ball-count'),
     catCountEl=document.getElementById('cat-count'),
     gameOverEl=document.getElementById('game-over'),
-    gameOverReasonEl=document.getElementById('game-over-reason'),
     restartBtn=document.getElementById('restart-btn'),
     warningEl=document.getElementById('warning'),
     finalScoreEl=document.getElementById('final-score'),
@@ -162,21 +160,11 @@
       if(Date.now()-lastMouseMoveTime>2000){
         showWarning("Keep moving the yarn or the cat will catch you!");
         if(Date.now()-lastMouseMoveTime>3000){
-          gameOver('Yarn stopped moving');
+          showWarning("Game Over: You stopped moving!");
+          gameOver('Stopped moving');
           return;
         }
       }
-
-      cats.slice(1).forEach((otherCat, index) => {
-        const otherCatRect = otherCat.el.getBoundingClientRect();
-        const mainCatRect = mainCat.el.getBoundingClientRect();
-        
-        if(otherCatRect.left<mainCatRect.right&&otherCatRect.right>mainCatRect.left&&
-           otherCatRect.top<mainCatRect.bottom&&otherCatRect.bottom>mainCatRect.top){
-          gameOver('Cat collision');
-          return;
-        }
-      });
 
       yarnBalls.forEach((ball,index)=>{
         const ballRect=ball.getBoundingClientRect();
@@ -184,25 +172,38 @@
 
         if(ballRect.left<catRect.right&&ballRect.right>catRect.left&&
            ballRect.top<catRect.bottom&&ballRect.bottom>catRect.top){
-          gameOver('Yarn caught');
-          return;
+          document.body.removeChild(ball);
+          yarnBalls.splice(index,1);
+          yarnBallCount++;
+          yarnBallCountEl.textContent=yarnBallCount;
+
+          gameSpeed*=1.05;
+
+          if(yarnBallCount%5===0){
+            const newCat=createCatFollower(mainCat.x-100,mainCat.y);
+            catCount++;
+            catCountEl.textContent=catCount;
+          }
+
+          if(yarnBallCount>=10&&!obstacleMovementActive){
+            obstacleMovementActive=true;
+            for(let i=0;i<3;i++)createMovingObstacle();
+          }
         }
       });
 
-      cats.forEach((cat, catIndex) => {
-        if(obstacleMovementActive){
-          obstacles.forEach((obstacle, index)=>{
-            const obstacleRect=obstacle.el.getBoundingClientRect();
-            const catRect=cat.el.getBoundingClientRect();
+      if(obstacleMovementActive){
+        obstacles.forEach((obstacle,index)=>{
+          const obstacleRect=obstacle.el.getBoundingClientRect();
+          const catRect=mainCat.el.getBoundingClientRect();
 
-            if(obstacleRect.left<catRect.right&&obstacleRect.right>catRect.left&&
-               obstacleRect.top<catRect.bottom&&obstacleRect.bottom>catRect.top){
-              gameOver('Obstacle collision');
-              return;
-            }
-          });
-        }
-      });
+          if(obstacleRect.left<catRect.right&&obstacleRect.right>catRect.left&&
+             obstacleRect.top<catRect.bottom&&obstacleRect.bottom>catRect.top){
+            gameOver('Obstacle collision');
+            return;
+          }
+        });
+      }
 
       if(Math.random()<0.01&&yarnBalls.length<5)createYarnBall();
     }
@@ -218,7 +219,6 @@
       
       finalScoreEl.textContent=yarnBallCount;
       highScoreEl.textContent=highScore;
-      gameOverReasonEl.textContent=reason;
       gameOverEl.style.display='block';
       cat.style.display='none';
     }
